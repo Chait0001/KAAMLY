@@ -27,14 +27,15 @@ INSERT INTO users (name, email, phone, password, role) VALUES
 -- -------------------------------------------------------
 -- 3. Shops (2 cycle repair shops in Hyderabad)
 -- -------------------------------------------------------
-INSERT INTO shops (category_id, name, slug, description, phone, address, city, area, latitude, longitude, source, status, rating) VALUES
+INSERT INTO shops (category_id, name, slug, description, phone, address, city, area, latitude, longitude, source, status, rating, opening_time, closing_time) VALUES
   (1, 'SpeedGear Cycle Works', 'speedgear-cycle-works',
    'Expert cycle repair and servicing for all brands.',
    '04012345678',
    '12-3-456, Near Charminar, Hyderabad',
    'Hyderabad', 'Charminar',
    17.3616000, 78.4747000,
-   'ADMIN', 'ACTIVE', 4.2),
+   'ADMIN', 'ACTIVE', 4.2,
+   '08:00:00', '20:00:00'),          -- open 8 AM – 8 PM
 
   (1, 'PedalFix Hub', 'pedalfix-hub',
    'Quick doorstep cycle repairs — gears, brakes, tyres.',
@@ -42,16 +43,17 @@ INSERT INTO shops (category_id, name, slug, description, phone, address, city, a
    '8-1-290, Road No 12, Banjara Hills, Hyderabad',
    'Hyderabad', 'Banjara Hills',
    17.4156000, 78.4347000,
-   'MAP', 'ACTIVE', 4.5);
+   'MAP', 'ACTIVE', 4.5,
+   '09:00:00', '21:00:00');          -- open 9 AM – 9 PM
 
 -- -------------------------------------------------------
 -- 4. Mechanics (3 mechanics across the 2 shops)
 --    user_id references the MECHANIC users inserted above.
 -- -------------------------------------------------------
-INSERT INTO mechanics (user_id, shop_id, experience_yrs, specialisation, is_available, rating) VALUES
-  (2, 1, 5, 'Gear cycles, road bikes',    TRUE,  4.3),   -- Vijay  → SpeedGear
-  (3, 1, 3, 'Kids cycles, tyre repairs',  TRUE,  4.0),   -- Anil   → SpeedGear
-  (4, 2, 7, 'E-bikes, premium cycles',    TRUE,  4.7);   -- Suresh → PedalFix Hub
+INSERT INTO mechanics (user_id, shop_id, experience_yrs, specialisation, is_available, verification_status, visit_charge, rating) VALUES
+  (2, 1, 5, 'Gear cycles, road bikes',    TRUE,  'APPROVED', 50.00,  4.3),   -- Vijay  → SpeedGear
+  (3, 1, 3, 'Kids cycles, tyre repairs',  TRUE,  'APPROVED', 40.00,  4.0),   -- Anil   → SpeedGear
+  (4, 2, 7, 'E-bikes, premium cycles',    TRUE,  'APPROVED', 60.00,  4.7);   -- Suresh → PedalFix Hub
 
 -- -------------------------------------------------------
 -- 5. Services (6 common cycle repair services)

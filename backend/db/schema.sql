@@ -62,6 +62,8 @@ CREATE TABLE IF NOT EXISTS shops (
   status        ENUM('ACTIVE','INACTIVE','PENDING') NOT NULL DEFAULT 'PENDING',
   rating        DECIMAL(2,1)  DEFAULT 0.0,         -- shop-level average (1.0–5.0)
   total_reviews INT UNSIGNED  DEFAULT 0,
+  opening_time  TIME          DEFAULT NULL,         -- e.g. 09:00:00 — nullable for shops with unknown hours
+  closing_time  TIME          DEFAULT NULL,         -- e.g. 20:00:00 — app uses these to show "Open now"
   image_url     VARCHAR(500)  DEFAULT NULL,
   created_at    TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
   updated_at    TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -81,13 +83,16 @@ CREATE TABLE IF NOT EXISTS mechanics (
   id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id         INT UNSIGNED  NOT NULL UNIQUE,   -- links to users table
   shop_id         INT UNSIGNED  NOT NULL,           -- which shop they belong to
-  experience_yrs  TINYINT UNSIGNED DEFAULT 0,      -- years of experience
-  specialisation  VARCHAR(200)  DEFAULT NULL,       -- e.g. "gear cycles, e-bikes"
-  is_available    BOOLEAN       DEFAULT TRUE,       -- can accept new bookings right now?
-  rating          DECIMAL(2,1)  DEFAULT 0.0,        -- mechanic-level average (1.0–5.0)
-  total_reviews   INT UNSIGNED  DEFAULT 0,
-  created_at      TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
-  updated_at      TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  experience_yrs       TINYINT UNSIGNED DEFAULT 0,      -- years of experience
+  specialisation       VARCHAR(200)  DEFAULT NULL,       -- e.g. "gear cycles, e-bikes"
+  is_available         BOOLEAN       DEFAULT TRUE,       -- can accept new bookings right now?
+  verification_status  ENUM('PENDING','APPROVED','REJECTED') NOT NULL DEFAULT 'PENDING',
+                                                         -- admin must approve before mechanic can receive bookings
+  visit_charge         DECIMAL(8,2)  NOT NULL DEFAULT 0.00, -- base visit/inspection fee shown on profile
+  rating               DECIMAL(2,1)  DEFAULT 0.0,        -- mechanic-level average (1.0–5.0)
+  total_reviews        INT UNSIGNED  DEFAULT 0,
+  created_at           TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+  updated_at           TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
   CONSTRAINT fk_mechanics_user FOREIGN KEY (user_id) REFERENCES users(id),
   CONSTRAINT fk_mechanics_shop FOREIGN KEY (shop_id) REFERENCES shops(id)
@@ -217,4 +222,26 @@ CREATE TABLE IF NOT EXISTS reviews (
 
   CONSTRAINT chk_shop_rating     CHECK (shop_rating BETWEEN 1 AND 5),
   CONSTRAINT chk_mechanic_rating CHECK (mechanic_rating BETWEEN 1 AND 5)
+) ENGINE=InnoDB;
+
+-- -------------------------------------------------------
+-- booking_items
+-- Extra work or parts a mechanic proposes after inspecting
+-- the cycle. Each item needs customer approval before it
+-- gets charged. This powers the CUSTOMER_APPROVAL step in
+-- the booking state machine.
+-- -------------------------------------------------------
+CREATE TABLE IF NOT EXISTS booking_items (
+  id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  booking_id  INT UNSIGNED  NOT NULL,
+  item_type   ENUM('PART','LABOUR') NOT NULL,       -- is this a physical part or labour?
+  description VARCHAR(255)  NOT NULL,               -- e.g. "New brake cable" or "Wheel re-lacing"
+  amount      DECIMAL(8,2)  NOT NULL DEFAULT 0.00,
+  status      ENUM('PENDING','APPROVED','REJECTED') NOT NULL DEFAULT 'PENDING',
+  created_at  TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+  updated_at  TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_bi_booking FOREIGN KEY (booking_id) REFERENCES bookings(id),
+
+  INDEX idx_bi_booking (booking_id)
 ) ENGINE=InnoDB;
