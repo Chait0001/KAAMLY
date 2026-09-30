@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS shops (
   category_id   INT UNSIGNED  NOT NULL,
   name          VARCHAR(200)  NOT NULL,
   slug          VARCHAR(200)  NOT NULL UNIQUE,
+  owner_name    VARCHAR(200)  DEFAULT NULL,        -- shop owner's name (from concept doc)
   description   TEXT          DEFAULT NULL,
   phone         VARCHAR(15)   DEFAULT NULL,
   address       VARCHAR(500)  NOT NULL,
@@ -132,29 +133,51 @@ CREATE TABLE IF NOT EXISTS shop_services (
 -- bookings
 -- A customer books a mechanic for a service at their doorstep.
 --
--- Status state machine:
---   PENDING ─→ ACCEPTED ─→ EN_ROUTE ─→ IN_PROGRESS ─→ COMPLETED
---       │          │
---       └→ CANCELLED  (customer cancels before acceptance)
---       └→ REJECTED   (mechanic declines)
---           │
---           └→ CANCELLED (customer can cancel an accepted booking too)
+-- Status state machine (exact states from concept doc):
+--   REQUESTED → SEARCHING → MECHANIC_ASSIGNED → MECHANIC_ACCEPTED
+--   → ON_THE_WAY → ARRIVED → INSPECTION → CUSTOMER_APPROVAL
+--   → REPAIR_IN_PROGRESS → COMPLETED → PAYMENT → RATING
+--   Also: CANCELLED (by customer) and REJECTED (by mechanic).
+--   SEARCHING & MECHANIC_ASSIGNED exist for future auto-matching;
+--   for now the customer picks a mechanic directly.
+--
+-- Pricing breakdown (from concept doc):
+--   total = service_charge + visit_charge + travel_charge + parts_charge
 -- -------------------------------------------------------
 CREATE TABLE IF NOT EXISTS bookings (
   id                INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   customer_id       INT UNSIGNED  NOT NULL,          -- the user who placed the booking
-  mechanic_id       INT UNSIGNED  NOT NULL,          -- the mechanic assigned
+  mechanic_id       INT UNSIGNED  DEFAULT NULL,      -- NULL during SEARCHING phase (future)
   shop_id           INT UNSIGNED  NOT NULL,
   shop_service_id   INT UNSIGNED  NOT NULL,          -- which service (with shop's price)
-  status            ENUM('PENDING','ACCEPTED','REJECTED','EN_ROUTE','IN_PROGRESS','COMPLETED','CANCELLED')
-                    NOT NULL DEFAULT 'PENDING',
+  status            ENUM(
+                      'REQUESTED',           -- customer placed the booking
+                      'SEARCHING',           -- (future) system looking for a mechanic
+                      'MECHANIC_ASSIGNED',   -- (future) system picked a mechanic
+                      'MECHANIC_ACCEPTED',   -- mechanic confirmed the job
+                      'ON_THE_WAY',          -- mechanic travelling to customer
+                      'ARRIVED',             -- mechanic reached the location
+                      'INSPECTION',          -- mechanic inspecting the cycle
+                      'CUSTOMER_APPROVAL',   -- extra work found, waiting for customer OK
+                      'REPAIR_IN_PROGRESS',  -- mechanic is fixing the cycle
+                      'COMPLETED',           -- repair finished
+                      'PAYMENT',             -- awaiting / processing payment
+                      'RATING',              -- customer asked to rate (terminal happy path)
+                      'CANCELLED',           -- cancelled by customer
+                      'REJECTED'             -- declined by mechanic
+                    ) NOT NULL DEFAULT 'REQUESTED',
   address           VARCHAR(500)  NOT NULL,          -- customer's doorstep address
   latitude          DECIMAL(10,7) DEFAULT NULL,
   longitude         DECIMAL(10,7) DEFAULT NULL,
   scheduled_at      DATETIME      DEFAULT NULL,      -- when the customer wants the visit
   started_at        DATETIME      DEFAULT NULL,      -- when mechanic starts working
   completed_at      DATETIME      DEFAULT NULL,
-  total_amount      DECIMAL(8,2)  DEFAULT 0.00,
+  -- pricing breakdown (concept doc: total = service + visit + travel + parts)
+  service_charge    DECIMAL(8,2)  DEFAULT 0.00,      -- the repair service itself
+  visit_charge      DECIMAL(8,2)  DEFAULT 0.00,      -- visit / inspection fee
+  travel_charge     DECIMAL(8,2)  DEFAULT 0.00,      -- distance-based travel fee
+  parts_charge      DECIMAL(8,2)  DEFAULT 0.00,      -- replacement parts cost
+  total_amount      DECIMAL(8,2)  DEFAULT 0.00,      -- sum of the four charges above
   notes             TEXT          DEFAULT NULL,       -- customer's description of the issue
   created_at        TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
   updated_at        TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
