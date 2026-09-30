@@ -23,7 +23,7 @@ listed below.**
 
 | Layer    | Technology                                                        |
 | -------- | ----------------------------------------------------------------- |
-| Backend  | Node.js + Express — plain JavaScript (no TypeScript on server). Port 5001. |
+| Backend  | Node.js + Express — plain JavaScript (no TypeScript on server). Port 5055. |
 | Database | MySQL via the `mysql2` package — plain SQL queries, **no ORM**    |
 | Auth     | JWT + `bcryptjs` — three roles: `CUSTOMER`, `MECHANIC`, `ADMIN`   |
 | Mobile   | React Native with **Expo**, TypeScript, and **Expo Router**       |
