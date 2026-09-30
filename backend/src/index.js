@@ -28,7 +28,16 @@ app.use("/api", authRoutes);
 
 // ---- Start server ----
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const PORT = process.env.PORT || 5001;
+const server = app.listen(PORT, () => {
   console.log(`Kaamly backend running on http://localhost:${PORT}`);
+});
+
+// If the port is already in use (e.g. macOS AirPlay uses 5000), print a clear error and exit
+server.on("error", (err) => {
+  if (err.code === "EADDRINUSE") {
+    console.error(`Port ${PORT} is already in use. Please free up the port or change it in .env`);
+    process.exit(1);
+  }
+  console.error(err);
 });
