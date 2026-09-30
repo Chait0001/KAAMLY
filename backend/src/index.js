@@ -6,6 +6,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const healthRoutes = require("./routes/healthRoutes");
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use(express.json());
 
 // All routes are prefixed with /api so it's easy to add a reverse proxy later.
 app.use("/api", healthRoutes);
+app.use("/api", authRoutes);
 
 // ---- Start server ----
 
