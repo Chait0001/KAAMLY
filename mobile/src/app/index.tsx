@@ -1,8 +1,11 @@
-// App entry point — redirects to the login screen immediately.
-// Redirect is an Expo Router component: when it renders, the user
-// is sent to the target route without seeing this screen at all.
-import { Redirect } from "expo-router";
+import { View, ActivityIndicator } from "react-native";
 
 export default function Index() {
-  return <Redirect href="/(auth)/login" />;
+  // Routing is handled automatically by AuthContext in useEffect.
+  // We just show a spinner while it decides where to go.
+  return (
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <ActivityIndicator size="large" />
+    </View>
+  );
 }

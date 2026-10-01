@@ -3,12 +3,15 @@
 // This _layout.tsx wraps every screen. <Stack> gives us a stack navigator
 // (screens slide in from the right, with a back button).
 import { Stack } from "expo-router";
+import { AuthProvider } from "../store/AuthContext";
 
 export default function RootLayout() {
   return (
-    <Stack
-      // screenOptions apply to every screen in this stack by default
-      screenOptions={{ headerShown: false }}
-    />
+    <AuthProvider>
+      <Stack
+        // screenOptions apply to every screen in this stack by default
+        screenOptions={{ headerShown: false }}
+      />
+    </AuthProvider>
   );
 }
