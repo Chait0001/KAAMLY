@@ -4,14 +4,17 @@
 // (screens slide in from the right, with a back button).
 import { Stack } from "expo-router";
 import { AuthProvider } from "../store/AuthContext";
+import { LocationProvider } from "../store/LocationContext";
 
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <Stack
-        // screenOptions apply to every screen in this stack by default
-        screenOptions={{ headerShown: false }}
-      />
+      <LocationProvider>
+        <Stack
+          // screenOptions apply to every screen in this stack by default
+          screenOptions={{ headerShown: false }}
+        />
+      </LocationProvider>
     </AuthProvider>
   );
 }
