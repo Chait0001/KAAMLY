@@ -6,10 +6,39 @@ const pool = require("../config/db");
 // -----------------------------------------------------------
 const getShops = async (req, res) => {
   try {
-    const { lat, lng, city, sort, page = 1, limit = 10 } = req.query;
-    
+    let { lat, lng, city, sort, page = 1, limit = 10 } = req.query;
+
+    if (sort && !['nearest', 'rating', 'available'].includes(sort)) {
+      return res.status(400).json({ error: "Invalid sort value. Allowed: nearest, rating, available" });
+    }
+
+    if (lat !== undefined || lng !== undefined) {
+      if (isNaN(lat) || isNaN(lng)) {
+         return res.status(400).json({ error: "lat and lng must be numeric" });
+      }
+      const latNum = parseFloat(lat);
+      const lngNum = parseFloat(lng);
+      if (latNum < -90 || latNum > 90) {
+         return res.status(400).json({ error: "lat must be between -90 and 90" });
+      }
+      if (lngNum < -180 || lngNum > 180) {
+         return res.status(400).json({ error: "lng must be between -180 and 180" });
+      }
+    }
+
     const pageNum = parseInt(page, 10);
-    const limitNum = parseInt(limit, 10);
+    let limitNum = parseInt(limit, 10);
+
+    if (isNaN(pageNum) || pageNum <= 0) {
+      return res.status(400).json({ error: "page must be a positive integer" });
+    }
+    if (isNaN(limitNum) || limitNum <= 0) {
+      return res.status(400).json({ error: "limit must be a positive integer" });
+    }
+    if (limitNum > 50) {
+      limitNum = 50;
+    }
+
     const offset = (pageNum - 1) * limitNum;
 
     let query = `
