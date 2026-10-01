@@ -8,6 +8,9 @@ const cors = require("cors");
 const healthRoutes = require("./routes/healthRoutes");
 const authRoutes = require("./routes/authRoutes");
 
+const shopRoutes = require("./routes/shopRoutes");
+const mechanicRoutes = require("./routes/mechanicRoutes");
+
 const app = express();
 
 // ---- Global middleware ----
@@ -25,6 +28,8 @@ app.use(express.json());
 // All routes are prefixed with /api so it's easy to add a reverse proxy later.
 app.use("/api", healthRoutes);
 app.use("/api", authRoutes);
+app.use("/api", shopRoutes);
+app.use("/api", mechanicRoutes);
 
 // ---- Start server ----
 
