@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { authApi } from '../api/auth';
-import { useRouter, useSegments } from 'expo-router';
+import { useRouter, useSegments, useRootNavigationState } from 'expo-router';
 
 type User = {
   id: number;
@@ -27,6 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const segments = useSegments();
+  const navigationState = useRootNavigationState();
 
   // Load token on startup
   useEffect(() => {
@@ -45,8 +46,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setToken(null);
           }
         }
-      } catch (err) {
-        console.error('Failed to restore session:', err);
+      } catch (err: any) {
+        await SecureStore.deleteItemAsync('token');
+        setToken(null);
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -57,6 +60,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Handle routing based on auth state
   useEffect(() => {
     if (isLoading) return;
+    if (!navigationState?.key) {
+      return; // Wait until navigation is ready!
+    }
 
     // which route group are we currently in?
     const inAuthGroup = segments[0] === '(auth)';
@@ -77,7 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     }
-  }, [user, isLoading, segments]);
+  }, [user, isLoading, segments, navigationState?.key]);
 
   const login = async (newToken: string, newUser: User) => {
     await SecureStore.setItemAsync('token', newToken);
